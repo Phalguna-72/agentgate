@@ -41,3 +41,12 @@ def test_decide_denies_unauthorized_role():
 def test_decide_allows_valid_call():
     result = decide(policy, "analyst", "summarize this file", "read_file", now=0)
     assert result["decision"] == "ALLOW"
+
+
+def test_mixed_request_is_blocked():
+    # reads fine on its own, but the request also asks for a delete
+    assert check_intent("read this file and then delete it", "read_file") is False
+
+
+def test_delete_request_matches_delete_tool():
+    assert check_intent("delete the old file", "delete_file") is True

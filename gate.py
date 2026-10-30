@@ -11,16 +11,24 @@ def check_identity(policy: dict, role: str, tool_name: str) -> bool:
     return tool_name in allowed
 
 
+DESTRUCTIVE_TOOLS = ["delete_file", "send_email"]
+
+
 def check_intent(user_request: str, tool_name: str) -> bool:
-    # Keyword rules: each tool must be mentioned in a way that fits the request
     rules = {
         "read_file": ["read", "open", "show", "summarize", "look at"],
         "query_db": ["query", "database", "look up", "find", "count"],
         "send_email": ["email", "send", "message"],
         "delete_file": ["delete", "remove", "erase"],
     }
-    keywords = rules.get(tool_name, [])
     request = user_request.lower()
+
+    # If the request mentions a destructive action, it must belong to the tool being called
+    for other_tool in DESTRUCTIVE_TOOLS:
+        if other_tool != tool_name and any(word in request for word in rules[other_tool]):
+            return False
+
+    keywords = rules.get(tool_name, [])
     return any(word in request for word in keywords)
 
 
