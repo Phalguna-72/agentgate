@@ -22,3 +22,22 @@ def check_intent(user_request: str, tool_name: str) -> bool:
     keywords = rules.get(tool_name, [])
     request = user_request.lower()
     return any(word in request for word in keywords)
+
+
+import time
+
+call_history: dict[str, list[float]] = {}
+
+
+def check_behavior(policy: dict, tool_name: str, now: float | None = None) -> bool:
+    limit = policy["rate_limit"]
+    if tool_name != limit["tool"]:
+        return True
+    now = time.time() if now is None else now
+    history = call_history.setdefault(tool_name, [])
+    # keep only the calls made inside the time window
+    history[:] = [t for t in history if now - t < limit["window_seconds"]]
+    if len(history) >= limit["max_calls"]:
+        return False
+    history.append(now)
+    return True
