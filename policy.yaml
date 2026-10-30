@@ -1,0 +1,12 @@
+roles:
+  analyst:
+    allowed_tools: [read_file, query_db]
+  admin:
+    allowed_tools: [read_file, query_db, send_email, delete_file]
+
+rate_limit:
+  tool: query_db
+  max_calls: 5
+  window_seconds: 10
+
+allowed_email_domains: [company.com]
