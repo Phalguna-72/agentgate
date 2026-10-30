@@ -41,3 +41,13 @@ def check_behavior(policy: dict, tool_name: str, now: float | None = None) -> bo
         return False
     history.append(now)
     return True
+
+
+def decide(policy: dict, role: str, user_request: str, tool_name: str, now: float | None = None) -> dict:
+    if not check_identity(policy, role, tool_name):
+        return {"decision": "DENY", "reason": f"role '{role}' may not use {tool_name}"}
+    if not check_intent(user_request, tool_name):
+        return {"decision": "NEEDS_APPROVAL", "reason": "tool does not match the user's request"}
+    if not check_behavior(policy, tool_name, now):
+        return {"decision": "DENY", "reason": "too many calls in a short time"}
+    return {"decision": "ALLOW", "reason": "passed identity, intent and behavior checks"}
