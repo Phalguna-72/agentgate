@@ -1,5 +1,5 @@
 import yaml
-
+import time
 
 def load_policy(path: str = "policy.yaml") -> dict:
     with open(path) as f:
@@ -32,30 +32,29 @@ def check_intent(user_request: str, tool_name: str) -> bool:
     return any(word in request for word in keywords)
 
 
-import time
 
 call_history: dict[str, list[float]] = {}
 
 
-def check_behavior(policy: dict, tool_name: str, now: float | None = None) -> bool:
+def check_behavior(policy: dict, tool_name: str, now: float | None = None, user: str = "anon") -> bool:
     limit = policy["rate_limit"]
     if tool_name != limit["tool"]:
         return True
     now = time.time() if now is None else now
-    history = call_history.setdefault(tool_name, [])
-    # keep only the calls made inside the time window
+    key = f"{user}:{tool_name}"
+    history = call_history.setdefault(key, [])
     history[:] = [t for t in history if now - t < limit["window_seconds"]]
     if len(history) >= limit["max_calls"]:
         return False
     history.append(now)
     return True
 
-
-def decide(policy: dict, role: str, user_request: str, tool_name: str, now: float | None = None) -> dict:
+def decide(policy: dict, role: str, user_request: str, tool_name: str,
+           now: float | None = None, user: str = "anon") -> dict:
     if not check_identity(policy, role, tool_name):
         return {"decision": "DENY", "reason": f"role '{role}' may not use {tool_name}"}
     if not check_intent(user_request, tool_name):
         return {"decision": "NEEDS_APPROVAL", "reason": "tool does not match the user's request"}
-    if not check_behavior(policy, tool_name, now):
+    if not check_behavior(policy, tool_name, now, user):
         return {"decision": "DENY", "reason": "too many calls in a short time"}
     return {"decision": "ALLOW", "reason": "passed identity, intent and behavior checks"}

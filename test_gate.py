@@ -50,3 +50,17 @@ def test_mixed_request_is_blocked():
 
 def test_delete_request_matches_delete_tool():
     assert check_intent("delete the old file", "delete_file") is True
+
+
+
+def test_rate_limit_is_per_user():
+    for i in range(5):
+        check_behavior(policy, "query_db", now=200 + i, user="anita")
+    assert check_behavior(policy, "query_db", now=205, user="anita") is False
+    assert check_behavior(policy, "query_db", now=205, user="bala") is True
+
+def test_approval_cannot_override_identity():
+    from approvals import request_approval, approve
+    ticket = request_approval("analyst", "delete the old file", "delete_file", "old.txt")
+    result = approve(ticket, run=lambda name, arg: "ran")
+    assert result.startswith("DENIED")
