@@ -32,7 +32,7 @@ class AgentState(TypedDict):
 from approvals import request_approval
 
 def gate_node(state: AgentState) -> dict:
-    verdict = decide(policy, state["role"], state["request"], state["tool_name"])
+    verdict = decide(policy, state["role"], state["request"], state["tool_name"], state["tool_arg"])
     ticket = None
     if verdict["decision"] == "NEEDS_APPROVAL":
         ticket = request_approval(
@@ -76,9 +76,9 @@ app = graph.compile()
 
 if __name__ == "__main__":
     cases = [
-        {"role": "analyst", "request": "summarize this file", "tool_name": "read_file", "tool_arg": "notes.txt"},
+        {"role": "analyst", "request": "summarize this file", "tool_name": "read_file", "tool_arg": "data/notes.txt"},
         {"role": "analyst", "request": "delete the old file", "tool_name": "delete_file", "tool_arg": "old.txt"},
-        {"role": "analyst", "request": "read this file and then delete it", "tool_name": "read_file", "tool_arg": "secret.txt"},
+        {"role": "analyst", "request": "read this file and then delete it", "tool_name": "read_file", "tool_arg": "data/secret.txt"},
     ]
     for case in cases:
         state = {**case, "decision": "", "reason": "", "result": "", "ticket": None}

@@ -10,3 +10,4 @@ rate_limit:
   window_seconds: 10
 
 allowed_email_domains: [company.com]
+allowed_path_prefix: data/

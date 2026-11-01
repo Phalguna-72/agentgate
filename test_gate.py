@@ -1,4 +1,4 @@
-from gate import load_policy, check_identity, check_intent, check_behavior, decide
+from gate import load_policy, check_identity, check_intent, check_behavior, decide, check_arguments
 
 policy = load_policy()
 
@@ -39,9 +39,8 @@ def test_decide_denies_unauthorized_role():
 
 
 def test_decide_allows_valid_call():
-    result = decide(policy, "analyst", "summarize this file", "read_file", now=0)
+    result = decide(policy, "analyst", "summarize this file", "read_file", "data/notes.txt", now=0)
     assert result["decision"] == "ALLOW"
-
 
 def test_mixed_request_is_blocked():
     # reads fine on its own, but the request also asks for a delete
@@ -64,3 +63,14 @@ def test_approval_cannot_override_identity():
     ticket = request_approval("analyst", "delete the old file", "delete_file", "old.txt")
     result = approve(ticket, run=lambda name, arg: "ran")
     assert result.startswith("DENIED")
+
+def test_path_inside_data_folder_is_allowed():
+    assert check_arguments(policy, "read_file", "data/notes.txt") is True
+
+
+def test_path_traversal_is_denied():
+    assert check_arguments(policy, "read_file", "data/../secrets.txt") is False
+
+
+def test_absolute_path_is_denied():
+    assert check_arguments(policy, "read_file", "/etc/passwd") is False

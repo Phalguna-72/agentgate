@@ -1,4 +1,5 @@
 import yaml
+import os
 import time
 
 def load_policy(path: str = "policy.yaml") -> dict:
@@ -50,11 +51,24 @@ def check_behavior(policy: dict, tool_name: str, now: float | None = None, user:
     return True
 
 def decide(policy: dict, role: str, user_request: str, tool_name: str,
-           now: float | None = None, user: str = "anon") -> dict:
+           arg: str = "", now: float | None = None, user: str = "anon") -> dict:
     if not check_identity(policy, role, tool_name):
         return {"decision": "DENY", "reason": f"role '{role}' may not use {tool_name}"}
+    if not check_arguments(policy, tool_name, arg):
+        return {"decision": "DENY", "reason": f"path '{arg}' is outside the allowed folder"}
     if not check_intent(user_request, tool_name):
         return {"decision": "NEEDS_APPROVAL", "reason": "tool does not match the user's request"}
     if not check_behavior(policy, tool_name, now, user):
         return {"decision": "DENY", "reason": "too many calls in a short time"}
     return {"decision": "ALLOW", "reason": "passed identity, intent and behavior checks"}
+
+
+
+def check_arguments(policy: dict, tool_name: str, tool_arg: str) -> bool:
+    # only file tools have a path to check
+    if tool_name not in ("read_file", "delete_file"):
+        return True
+    prefix = policy.get("allowed_path_prefix", "data/")
+    # normalize the path: "data/../secrets.txt" becomes "secrets.txt"
+    cleaned = os.path.normpath(tool_arg).replace("\\", "/")
+    return cleaned.startswith(prefix.rstrip("/"))
