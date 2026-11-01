@@ -76,4 +76,5 @@ def check_arguments(policy: dict, tool_name: str, tool_arg: str) -> bool:
         return True
     prefix = policy.get("allowed_path_prefix", "data/")
     cleaned = os.path.normpath(tool_arg).replace("\\", "/")
-    return cleaned.startswith(prefix.rstrip("/"))
+    
+    return cleaned.startswith(prefix)

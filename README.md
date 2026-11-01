@@ -7,7 +7,7 @@
 | **Problem** | An AI model can be tricked by text it reads (prompt injection) into doing something harmful |
 | **Solution** | Four rule-based checks on every tool call, kept outside the model |
 | **Stack** | Python, LangGraph, YAML policy, pytest, Ollama (optional local model) |
-| **Tests** | 19 passing |
+| **Tests** | 20 passing |
 | **Status** | Prototype of the decision logic. Tools are placeholders. |
 
 ---
@@ -182,32 +182,7 @@ The point is not how good the model is. The gate stops the action whether or not
 
 ---
 
-## 9. Likely interview questions
-
-**Why not let the model decide?**
-A model can be fooled by text it reads. Rules outside the model stay the same no matter what the model says.
-
-**What happens if the model is tricked?**
-The gate still checks the role, the arguments, the intent, and the rate. In the test, every attempt was blocked.
-
-**Why is identity first?**
-It is the firmest and cheapest rule. A denied role should never reach the other checks.
-
-**Why does approval re-check identity?**
-A ticket can sit for a while, and a role can change. The check at approval time is the final word.
-
-**Is this production-ready?**
-No. It is a prototype of the decision logic. Roles are typed in, there is no login, and the tools do nothing real.
-
-**What is the weakest part?**
-Intent. It uses keywords, so a clever phrasing can avoid it. A real system would use a classifier, keeping the keyword rules as a floor.
-
-**What would you build next?**
-A real login for roles, an intent classifier, a database for rules, a persistent approval queue, and tests against more models.
-
----
-
-## 10. Files
+## 9. Files
 
 | File | Job |
 |---|---|
@@ -219,12 +194,12 @@ A real login for roles, an intent classifier, a database for rules, a persistent
 | `tools.py` | Four placeholder tools |
 | `propose.py` | Asks the local model to choose a tool (optional) |
 | `injection_test.py` | Injection experiment (optional) |
-| `test_gate.py` | 19 pytest tests |
+| `test_gate.py` | 20 pytest tests |
 | `.gitignore` | Keeps `venv/`, cache folders, and `audit.jsonl` off GitHub |
 
 ---
 
-## 11. Setup
+## 10. Setup
 
 Requires Python 3.11 or newer. Built and tested with Python 3.12.
 
@@ -242,7 +217,7 @@ ollama pull llama3.2:3b
 
 ---
 
-## 12. Run it
+## 11. Run it
 
 ```
 python agent.py
@@ -251,11 +226,11 @@ python injection_test.py       (needs Ollama running)
 ```
 
 Expected from `agent.py`: three decision lines, then the pending ticket.
-Expected from `pytest`: `19 passed`.
+Expected from `pytest`: `20 passed`.
 
 ---
 
-## 13. Limitations
+## 12. Limitations
 
 - Roles are passed in. There is no login.
 - Intent uses keywords, which a clever phrasing can avoid.
@@ -266,7 +241,7 @@ Expected from `pytest`: `19 passed`.
 
 ---
 
-## 14. Next steps
+## 13. What I would build next
 
 - Connect a stronger model and test more injection styles.
 - Add an intent classifier, keeping the keyword rules as a floor.

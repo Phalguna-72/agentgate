@@ -86,3 +86,6 @@ def test_email_to_outside_domain_is_denied():
 
 def test_lookalike_domain_is_denied():
     assert check_arguments(policy, "send_email", "ravi@company.com.evil.com") is False
+
+def test_similar_name_outside_folder_is_denied():
+    assert check_arguments(policy, "read_file", "data_secret.txt") is False
