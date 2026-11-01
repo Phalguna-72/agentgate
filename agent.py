@@ -3,6 +3,10 @@ from langgraph.graph import StateGraph, START, END
 from gate import load_policy, decide
 from tools import read_file, query_db, send_email, delete_file
 from audit import write_audit
+from approvals import request_approval
+from approvals import pending
+
+
 
 policy = load_policy()
 
@@ -22,19 +26,31 @@ class AgentState(TypedDict):
     decision: str
     reason: str
     result: str
+    ticket: int | None
 
+
+from approvals import request_approval
 
 def gate_node(state: AgentState) -> dict:
     verdict = decide(policy, state["role"], state["request"], state["tool_name"])
+    ticket = None
+    if verdict["decision"] == "NEEDS_APPROVAL":
+        ticket = request_approval(
+            state["role"], state["request"], state["tool_name"], state["tool_arg"]
+        )
     write_audit({
         "role": state["role"],
         "request": state["request"],
         "tool": state["tool_name"],
         "decision": verdict["decision"],
         "reason": verdict["reason"],
+        "ticket": ticket,
     })
-    return {"decision": verdict["decision"], "reason": verdict["reason"]}
-
+    return {
+        "decision": verdict["decision"],
+        "reason": verdict["reason"],
+        "ticket": ticket,
+    }
 
 def run_tool(state: AgentState) -> dict:
     name = state["tool_name"]
@@ -65,6 +81,8 @@ if __name__ == "__main__":
         {"role": "analyst", "request": "read this file and then delete it", "tool_name": "read_file", "tool_arg": "secret.txt"},
     ]
     for case in cases:
-        state = {**case, "decision": "", "reason": "", "result": ""}
+        state = {**case, "decision": "", "reason": "", "result": "", "ticket": None}
         out = app.invoke(state)
         print(out["decision"], "|", out["reason"], "|", out["result"] or "-")
+           
+    print("pending tickets:", pending)
