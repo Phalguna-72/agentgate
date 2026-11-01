@@ -74,3 +74,15 @@ def test_path_traversal_is_denied():
 
 def test_absolute_path_is_denied():
     assert check_arguments(policy, "read_file", "/etc/passwd") is False
+
+
+def test_email_to_allowed_domain_is_allowed():
+    assert check_arguments(policy, "send_email", "ravi@company.com") is True
+
+
+def test_email_to_outside_domain_is_denied():
+    assert check_arguments(policy, "send_email", "ravi@gmail.com") is False
+
+
+def test_lookalike_domain_is_denied():
+    assert check_arguments(policy, "send_email", "ravi@company.com.evil.com") is False

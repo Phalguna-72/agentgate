@@ -55,7 +55,7 @@ def decide(policy: dict, role: str, user_request: str, tool_name: str,
     if not check_identity(policy, role, tool_name):
         return {"decision": "DENY", "reason": f"role '{role}' may not use {tool_name}"}
     if not check_arguments(policy, tool_name, arg):
-        return {"decision": "DENY", "reason": f"path '{arg}' is outside the allowed folder"}
+        return {"decision": "DENY", "reason": f"argument '{arg}' is not allowed for {tool_name}"}
     if not check_intent(user_request, tool_name):
         return {"decision": "NEEDS_APPROVAL", "reason": "tool does not match the user's request"}
     if not check_behavior(policy, tool_name, now, user):
@@ -65,10 +65,15 @@ def decide(policy: dict, role: str, user_request: str, tool_name: str,
 
 
 def check_arguments(policy: dict, tool_name: str, tool_arg: str) -> bool:
-    # only file tools have a path to check
+    if tool_name == "send_email":
+        # the address is the argument; only allowed domains pass
+        if "@" not in tool_arg:
+            return False
+        domain = tool_arg.rsplit("@", 1)[-1].lower()
+        return domain in policy.get("allowed_email_domains", [])
+    # file tools: the path must stay inside the allowed folder
     if tool_name not in ("read_file", "delete_file"):
         return True
     prefix = policy.get("allowed_path_prefix", "data/")
-    # normalize the path: "data/../secrets.txt" becomes "secrets.txt"
     cleaned = os.path.normpath(tool_arg).replace("\\", "/")
     return cleaned.startswith(prefix.rstrip("/"))
